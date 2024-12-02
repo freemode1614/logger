@@ -108,5 +108,3 @@ function getColorForLevel(level: DebugLevel): string {
     }
   }
 }
-
-export const renderLogger = createScopedLogger('Render');
