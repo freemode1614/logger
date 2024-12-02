@@ -1,4 +1,7 @@
-export type DebugLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
+import chalk from "chalk";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type DebugLevel = "trace" | "debug" | "info" | "warn" | "error";
 
 type LoggerFunction = (...messages: any[]) => void;
 
@@ -11,33 +14,41 @@ interface Logger {
   setLevel: (level: DebugLevel) => void;
 }
 
-let currentLevel: DebugLevel = (import.meta.env.VITE_LOG_LEVEL ?? import.meta.env.DEV) ? 'debug' : 'info';
+const isBrowser = "HTMLElement" in globalThis;
 
-const isWorker = 'HTMLRewriter' in globalThis;
+// @ts-expect-error import.meta.env exisit in vite.
+const DEV = isBrowser ? import.meta.env.DEV : process.env.NODE_ENV === "development";
+
+// @ts-expect-error import.meta.env exisit in vite.
+const PROD = isBrowser ? import.meta.PROD : process.env.NODE_ENV === "production";
+
+let currentLevel: DebugLevel = DEV ? "debug" : "info";
+
+const isWorker = "HTMLRewriter" in globalThis;
 const supportsColor = !isWorker;
 
 export const logger: Logger = {
-  trace: (...messages: any[]) => log('trace', undefined, messages),
-  debug: (...messages: any[]) => log('debug', undefined, messages),
-  info: (...messages: any[]) => log('info', undefined, messages),
-  warn: (...messages: any[]) => log('warn', undefined, messages),
-  error: (...messages: any[]) => log('error', undefined, messages),
+  trace: (...messages: any[]) => log("trace", undefined, messages),
+  debug: (...messages: any[]) => log("debug", undefined, messages),
+  info: (...messages: any[]) => log("info", undefined, messages),
+  warn: (...messages: any[]) => log("warn", undefined, messages),
+  error: (...messages: any[]) => log("error", undefined, messages),
   setLevel,
 };
 
 export function createScopedLogger(scope: string): Logger {
   return {
-    trace: (...messages: any[]) => log('trace', scope, messages),
-    debug: (...messages: any[]) => log('debug', scope, messages),
-    info: (...messages: any[]) => log('info', scope, messages),
-    warn: (...messages: any[]) => log('warn', scope, messages),
-    error: (...messages: any[]) => log('error', scope, messages),
+    trace: (...messages: any[]) => log("trace", scope, messages),
+    debug: (...messages: any[]) => log("debug", scope, messages),
+    info: (...messages: any[]) => log("info", scope, messages),
+    warn: (...messages: any[]) => log("warn", scope, messages),
+    error: (...messages: any[]) => log("error", scope, messages),
     setLevel,
   };
 }
 
 function setLevel(level: DebugLevel) {
-  if ((level === 'trace' || level === 'debug') && import.meta.env.PROD) {
+  if ((level === "trace" || level === "debug") && PROD) {
     return;
   }
 
@@ -45,23 +56,23 @@ function setLevel(level: DebugLevel) {
 }
 
 function log(level: DebugLevel, scope: string | undefined, messages: any[]) {
-  const levelOrder: DebugLevel[] = ['trace', 'debug', 'info', 'warn', 'error'];
+  const levelOrder: DebugLevel[] = ["trace", "debug", "info", "warn", "error"];
 
   if (levelOrder.indexOf(level) < levelOrder.indexOf(currentLevel)) {
     return;
   }
 
-  const allMessages = messages.reduce((acc, current) => {
-    if (acc.endsWith('\n')) {
-      return acc + current;
+  const allMessages = messages.reduce((accumulator, current) => {
+    if (accumulator.endsWith("\n")) {
+      return accumulator + current;
     }
 
-    if (!acc) {
+    if (!accumulator) {
       return current;
     }
 
-    return `${acc} ${current}`;
-  }, '');
+    return `${accumulator} ${current}`;
+  }, "");
 
   if (!supportsColor) {
     console.log(`[${level.toUpperCase()}]`, allMessages);
@@ -70,41 +81,52 @@ function log(level: DebugLevel, scope: string | undefined, messages: any[]) {
   }
 
   const labelBackgroundColor = getColorForLevel(level);
-  const labelTextColor = level === 'warn' ? 'black' : 'white';
+  const labelTextColor = level === "warn" ? "#000000" : "#FFFFFF";
 
-  const labelStyles = getLabelStyles(labelBackgroundColor, labelTextColor);
-  const scopeStyles = getLabelStyles('#77828D', 'white');
+  if (isBrowser) {
+    const labelStyles = getLabelStyles(labelBackgroundColor, labelTextColor);
+    const scopeStyles = getLabelStyles("#77828D", "#FFFFFF");
 
-  const styles = [labelStyles];
+    const styles = [labelStyles];
 
-  if (typeof scope === 'string') {
-    styles.push('', scopeStyles);
+    if (typeof scope === "string") {
+      styles.push("", scopeStyles);
+    }
+
+    console.log(`%c${level.toUpperCase()}${scope ? `%c %c${scope}` : ""}`, ...styles, allMessages);
+  } else {
+    const labelStyled = getStyledLabel(labelBackgroundColor, labelTextColor, level.toUpperCase());
+    const scopeStyled = getStyledLabel("#77828D", "white", scope);
+
+    console.log(labelStyled, scopeStyled, allMessages);
   }
-
-  console.log(`%c${level.toUpperCase()}${scope ? `%c %c${scope}` : ''}`, ...styles, allMessages);
 }
 
 function getLabelStyles(color: string, textColor: string) {
-  return `background-color: ${color}; color: white; border: 4px solid ${color}; color: ${textColor};`;
+  return `background-color: ${color}; color: white; border: 4px solid ${color}; color: ${textColor}; `;
+}
+
+function getStyledLabel(bgColor: string, textColor: string, text?: string) {
+  return text ? chalk.bgHex(bgColor).hex(textColor).bold(text) : "";
 }
 
 function getColorForLevel(level: DebugLevel): string {
   switch (level) {
-    case 'trace':
-    case 'debug': {
-      return '#77828D';
+    case "trace":
+    case "debug": {
+      return "#77828D";
     }
-    case 'info': {
-      return '#1389FD';
+    case "info": {
+      return "#1389FD";
     }
-    case 'warn': {
-      return '#FFDB6C';
+    case "warn": {
+      return "#FFDB6C";
     }
-    case 'error': {
-      return '#EE4744';
+    case "error": {
+      return "#EE4744";
     }
     default: {
-      return 'black';
+      return "#000000";
     }
   }
 }
