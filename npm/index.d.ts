@@ -1,6 +1,6 @@
 type DebugLevel = "trace" | "debug" | "info" | "warn" | "error";
 type LoggerFunction = (...messages: any[]) => void;
-interface Logger {
+interface LoggerMethods {
     trace: LoggerFunction;
     debug: LoggerFunction;
     info: LoggerFunction;
@@ -8,7 +8,7 @@ interface Logger {
     error: LoggerFunction;
     setLevel: (level: DebugLevel) => void;
 }
-declare const logger: Logger;
-declare function createScopedLogger(scope: string): Logger;
+declare const logger: LoggerMethods;
+declare function createScopedLogger(scope: string): LoggerMethods;
 
-export { type DebugLevel, createScopedLogger, logger };
+export { type DebugLevel, type LoggerFunction, type LoggerMethods, createScopedLogger, logger };
