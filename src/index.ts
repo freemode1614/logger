@@ -3,9 +3,9 @@ import chalk from "chalk";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type DebugLevel = "trace" | "debug" | "info" | "warn" | "error";
 
-type LoggerFunction = (...messages: any[]) => void;
+export type LoggerFunction = (...messages: any[]) => void;
 
-interface Logger {
+export interface LoggerMethods {
   trace: LoggerFunction;
   debug: LoggerFunction;
   info: LoggerFunction;
@@ -27,7 +27,7 @@ let currentLevel: DebugLevel = DEV ? "debug" : "info";
 const isWorker = "HTMLRewriter" in globalThis;
 const supportsColor = !isWorker;
 
-export const logger: Logger = {
+export const logger: LoggerMethods = {
   trace: (...messages: any[]) => log("trace", undefined, messages),
   debug: (...messages: any[]) => log("debug", undefined, messages),
   info: (...messages: any[]) => log("info", undefined, messages),
@@ -36,7 +36,7 @@ export const logger: Logger = {
   setLevel,
 };
 
-export function createScopedLogger(scope: string): Logger {
+export function createScopedLogger(scope: string): LoggerMethods {
   return {
     trace: (...messages: any[]) => log("trace", scope, messages),
     debug: (...messages: any[]) => log("debug", scope, messages),
