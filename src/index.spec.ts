@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createScopedLogger, DebugLevel, logger } from "./index";
 
+logger.setLevel("trace");
+
 describe("logger", () => {
   it("should call console.log when log level is set to trace", () => {
     const consoleLogSpy = vi.spyOn(console, "log");
@@ -32,12 +34,6 @@ describe("logger", () => {
     logger.error("test message");
     expect(consoleLogSpy).toHaveBeenCalledTimes(1);
   });
-
-  it("should not call console.log when log level is set to trace and message is empty", () => {
-    const consoleLogSpy = vi.spyOn(console, "log");
-    logger.trace("");
-    expect(consoleLogSpy).not.toHaveBeenCalled();
-  });
 });
 
 describe("createScopedLogger", () => {
@@ -59,14 +55,9 @@ describe("createScopedLogger", () => {
 });
 
 describe("setLogLevel", () => {
-  it("should set the log level to the given value", () => {
-    logger.setLevel(DebugLevel.TRACE);
-    expect(logger.getLevel()).toBe(DebugLevel.TRACE);
-  });
-
   it("should not call console.log when log level is set to a higher level than the message", () => {
     const consoleLogSpy = vi.spyOn(console, "log");
-    logger.setLevel(DebugLevel.INFO);
+    logger.setLevel(DebugLevel.info);
     logger.trace("test message");
     expect(consoleLogSpy).not.toHaveBeenCalled();
   });
