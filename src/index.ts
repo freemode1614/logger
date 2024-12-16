@@ -1,9 +1,8 @@
 import chalk from "chalk";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export type DebugLevel = "trace" | "debug" | "info" | "warn" | "error";
 
-export type LoggerFunction = (...messages: any[]) => void;
+export type LoggerFunction = (...messages: unknown[]) => void;
 
 export interface LoggerMethods {
   trace: LoggerFunction;
@@ -28,21 +27,21 @@ const isWorker = "HTMLRewriter" in globalThis;
 const supportsColor = !isWorker;
 
 export const logger: LoggerMethods = {
-  trace: (...messages: any[]) => log("trace", undefined, messages),
-  debug: (...messages: any[]) => log("debug", undefined, messages),
-  info: (...messages: any[]) => log("info", undefined, messages),
-  warn: (...messages: any[]) => log("warn", undefined, messages),
-  error: (...messages: any[]) => log("error", undefined, messages),
+  trace: (...messages: unknown[]) => log("trace", undefined, messages),
+  debug: (...messages: unknown[]) => log("debug", undefined, messages),
+  info: (...messages: unknown[]) => log("info", undefined, messages),
+  warn: (...messages: unknown[]) => log("warn", undefined, messages),
+  error: (...messages: unknown[]) => log("error", undefined, messages),
   setLevel,
 };
 
 export function createScopedLogger(scope: string): LoggerMethods {
   return {
-    trace: (...messages: any[]) => log("trace", scope, messages),
-    debug: (...messages: any[]) => log("debug", scope, messages),
-    info: (...messages: any[]) => log("info", scope, messages),
-    warn: (...messages: any[]) => log("warn", scope, messages),
-    error: (...messages: any[]) => log("error", scope, messages),
+    trace: (...messages: unknown[]) => log("trace", scope, messages),
+    debug: (...messages: unknown[]) => log("debug", scope, messages),
+    info: (...messages: unknown[]) => log("info", scope, messages),
+    warn: (...messages: unknown[]) => log("warn", scope, messages),
+    error: (...messages: unknown[]) => log("error", scope, messages),
     setLevel,
   };
 }
@@ -55,14 +54,14 @@ function setLevel(level: DebugLevel) {
   currentLevel = level;
 }
 
-function log(level: DebugLevel, scope: string | undefined, messages: any[]) {
+function log(level: DebugLevel, scope: string | undefined, messages: unknown[]) {
   const levelOrder: DebugLevel[] = ["trace", "debug", "info", "warn", "error"];
 
   if (levelOrder.indexOf(level) < levelOrder.indexOf(currentLevel)) {
     return;
   }
 
-  const allMessages = messages.reduce((accumulator, current) => {
+  const allMessages = (messages as string[]).reduce((accumulator, current) => {
     if (accumulator.endsWith("\n")) {
       return accumulator + current;
     }
