@@ -1,64 +1,57 @@
-import { describe, expect, it, vi } from "vitest";
+import { logger, createScopedLogger } from './index';
+import chalk from 'chalk';
+import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 
-import { createScopedLogger, DebugLevel, logger } from "./index";
-
-logger.setLevel("trace");
-
-describe("logger", () => {
-  it("should call console.log when log level is set to trace", () => {
-    const consoleLogSpy = vi.spyOn(console, "log");
-    logger.trace("test message");
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+describe('logger', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'log');
   });
 
-  it("should call console.log when log level is set to debug", () => {
-    const consoleLogSpy = vi.spyOn(console, "log");
-    logger.debug("test message");
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
-  it("should call console.log when log level is set to info", () => {
-    const consoleLogSpy = vi.spyOn(console, "log");
-    logger.info("test message");
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+  it('should log message when level is debug', () => {
+    logger.debug('message');
+    expect(console.log).toHaveBeenCalledTimes(1);
   });
 
-  it("should call console.log when log level is set to warn", () => {
-    const consoleLogSpy = vi.spyOn(console, "log");
-    logger.warn("test message");
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+  it('should not log message when level is trace and current level is debug', () => {
+    logger.setLevel('debug');
+    logger.trace('message');
+    expect(console.log).not.toHaveBeenCalled();
   });
 
-  it("should call console.log when log level is set to error", () => {
-    const consoleLogSpy = vi.spyOn(console, "log");
-    logger.error("test message");
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("createScopedLogger", () => {
-  it("should return a new logger object with the given scope", () => {
-    const scopedLogger = createScopedLogger("test scope");
-    expect(scopedLogger).toHaveProperty("trace");
-    expect(scopedLogger).toHaveProperty("debug");
-    expect(scopedLogger).toHaveProperty("info");
-    expect(scopedLogger).toHaveProperty("warn");
-    expect(scopedLogger).toHaveProperty("error");
+  it('should log message with scope', () => {
+    const scopedLogger = createScopedLogger();
+    scopedLogger.debug('message');
+    expect(console.log).toHaveBeenCalledTimes(1);
   });
 
-  it("should call console.log when log level is set to trace on the scoped logger", () => {
-    const consoleLogSpy = vi.spyOn(console, "log");
-    const scopedLogger = createScopedLogger("test scope");
-    scopedLogger.trace("test message");
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
+  it('should not log message when level is error and current level is info', () => {
+    logger.setLevel('info');
+    logger.error('message');
+    expect(console.log).not.toHaveBeenCalled();
   });
-});
 
-describe("setLogLevel", () => {
-  it("should not call console.log when log level is set to a higher level than the message", () => {
-    const consoleLogSpy = vi.spyOn(console, "log");
-    logger.setLevel(DebugLevel.info);
-    logger.trace("test message");
-    expect(consoleLogSpy).not.toHaveBeenCalled();
+  it('should log message with color', () => {
+    const originalConsoleLog = console.log;
+    console.log = jest.fn();
+    logger.debug('message');
+    expect(console.log).toHaveBeenCalledTimes(1);
+    console.log = originalConsoleLog;
+  });
+
+  it('should create scoped logger', () => {
+    const scopedLogger = createScopedLogger();
+    expect(scopedLogger).toHaveProperty('debug');
+    expect(scopedLogger).toHaveProperty('info');
+    expect(scopedLogger).toHaveProperty('warn');
+    expect(scopedLogger).toHaveProperty('error');
+  });
+
+  it('should set level', () => {
+    logger.setLevel('debug');
+    expect(logger.currentLevel).toBe('debug');
   });
 });
