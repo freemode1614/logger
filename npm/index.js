@@ -1,6 +1,20 @@
 import chalk from 'chalk';
 
 // src/index.ts
+var levelPriority = /* @__PURE__ */ ((levelPriority2) => {
+  levelPriority2[levelPriority2["trace"] = 0] = "trace";
+  levelPriority2[levelPriority2["debug"] = 1] = "debug";
+  levelPriority2[levelPriority2["info"] = 2] = "info";
+  levelPriority2[levelPriority2["warn"] = 3] = "warn";
+  levelPriority2[levelPriority2["error"] = 4] = "error";
+  return levelPriority2;
+})(levelPriority || {});
+function setLevel(level) {
+  if ((level === "trace" || level === "debug") && PROD) {
+    return;
+  }
+  currentLevel = level;
+}
 var isBrowser = "HTMLElement" in globalThis;
 var DEV = isBrowser ? import.meta.env.DEV : process.env.NODE_ENV === "development";
 var PROD = isBrowser ? import.meta.PROD : process.env.NODE_ENV === "production";
@@ -25,18 +39,14 @@ function createScopedLogger(scope) {
     setLevel
   };
 }
-function setLevel(level) {
-  if ((level === "trace" || level === "debug") && PROD) {
-    return;
-  }
-  currentLevel = level;
-}
 function log(level, scope, messages) {
-  const levelOrder = ["trace", "debug", "info", "warn", "error"];
-  if (levelOrder.indexOf(level) < levelOrder.indexOf(currentLevel)) {
-    return;
-  }
-  const allMessages = messages.reduce((accumulator, current) => {
+  if (levelPriority[level] < levelPriority[currentLevel]) return;
+  const date = /* @__PURE__ */ new Date();
+  const timestamp = date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour12: false });
+  const formattedMessages = messages.reduce((accumulator, current) => {
+    if (typeof current === "object") {
+      return accumulator + "\n" + JSON.stringify(current, void 0, 2);
+    }
     if (accumulator.endsWith("\n")) {
       return accumulator + current;
     }
@@ -44,9 +54,9 @@ function log(level, scope, messages) {
       return current;
     }
     return `${accumulator} ${current}`;
-  }, "");
+  }, ``);
   if (!supportsColor) {
-    console.log(`[${level.toUpperCase()}]`, allMessages);
+    console.log(`[${timestamp}] [${level.toUpperCase()}]`, formattedMessages);
     return;
   }
   const labelBackgroundColor = getColorForLevel(level);
@@ -58,11 +68,11 @@ function log(level, scope, messages) {
     if (typeof scope === "string") {
       styles.push("", scopeStyles);
     }
-    console.log(`%c${level.toUpperCase()}${scope ? `%c %c${scope}` : ""}`, ...styles, allMessages);
+    console.log(`[${timestamp}]%c${level.toUpperCase()}${scope ? `%c %c${scope}` : ""}`, ...styles, formattedMessages);
   } else {
     const labelStyled = getStyledLabel(labelBackgroundColor, labelTextColor, level.toUpperCase());
     const scopeStyled = getStyledLabel("#77828D", "white", scope);
-    console.log(labelStyled, scopeStyled, allMessages);
+    console.log(`[${timestamp}]`, labelStyled, scopeStyled, formattedMessages);
   }
 }
 function getLabelStyles(color, textColor) {

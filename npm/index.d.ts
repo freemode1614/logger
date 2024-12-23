@@ -1,5 +1,12 @@
-type DebugLevel = "trace" | "debug" | "info" | "warn" | "error";
-type LoggerFunction = (...messages: any[]) => void;
+type LoggerFunction = (...messages: unknown[]) => void;
+declare enum levelPriority {
+    trace = 0,
+    debug = 1,
+    info = 2,
+    warn = 3,
+    error = 4
+}
+type DebugLevel = keyof typeof levelPriority;
 interface LoggerMethods {
     trace: LoggerFunction;
     debug: LoggerFunction;

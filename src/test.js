@@ -11,3 +11,13 @@ const logger2 = createScopedLogger("scope2");
 logger2.warn("Warning test");
 logger2.info("Info test");
 logger2.error("Info test");
+
+logger2.warn("xxx", {
+  message: "Warning test",
+  data: {
+    key: "value",
+    fn: () => {
+      return "hello";
+    },
+  },
+});

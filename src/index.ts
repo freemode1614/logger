@@ -1,8 +1,24 @@
 import chalk from "chalk";
 
-export type DebugLevel = "trace" | "debug" | "info" | "warn" | "error";
-
 export type LoggerFunction = (...messages: unknown[]) => void;
+
+enum levelPriority {
+  trace,
+  debug,
+  info,
+  warn,
+  error,
+}
+
+export type DebugLevel = keyof typeof levelPriority;
+
+function setLevel(level: DebugLevel) {
+  if ((level === "trace" || level === "debug") && PROD) {
+    return;
+  }
+
+  currentLevel = level;
+}
 
 export interface LoggerMethods {
   trace: LoggerFunction;
@@ -46,22 +62,17 @@ export function createScopedLogger(scope: string): LoggerMethods {
   };
 }
 
-function setLevel(level: DebugLevel) {
-  if ((level === "trace" || level === "debug") && PROD) {
-    return;
-  }
-
-  currentLevel = level;
-}
-
 function log(level: DebugLevel, scope: string | undefined, messages: unknown[]) {
-  const levelOrder: DebugLevel[] = ["trace", "debug", "info", "warn", "error"];
+  if (levelPriority[level] < levelPriority[currentLevel]) return;
 
-  if (levelOrder.indexOf(level) < levelOrder.indexOf(currentLevel)) {
-    return;
-  }
+  const date = new Date();
+  const timestamp = date.toLocaleDateString() + " " + date.toLocaleTimeString([], { hour12: false });
 
-  const allMessages = (messages as string[]).reduce((accumulator, current) => {
+  const formattedMessages = (messages as string[]).reduce((accumulator, current) => {
+    if (typeof current === "object") {
+      return accumulator + "\n" + JSON.stringify(current, undefined, 2);
+    }
+
     if (accumulator.endsWith("\n")) {
       return accumulator + current;
     }
@@ -71,10 +82,10 @@ function log(level: DebugLevel, scope: string | undefined, messages: unknown[]) 
     }
 
     return `${accumulator} ${current}`;
-  }, "");
+  }, ``);
 
   if (!supportsColor) {
-    console.log(`[${level.toUpperCase()}]`, allMessages);
+    console.log(`[${timestamp}] [${level.toUpperCase()}]`, formattedMessages);
 
     return;
   }
@@ -92,12 +103,12 @@ function log(level: DebugLevel, scope: string | undefined, messages: unknown[]) 
       styles.push("", scopeStyles);
     }
 
-    console.log(`%c${level.toUpperCase()}${scope ? `%c %c${scope}` : ""}`, ...styles, allMessages);
+    console.log(`[${timestamp}]%c${level.toUpperCase()}${scope ? `%c %c${scope}` : ""}`, ...styles, formattedMessages);
   } else {
     const labelStyled = getStyledLabel(labelBackgroundColor, labelTextColor, level.toUpperCase());
     const scopeStyled = getStyledLabel("#77828D", "white", scope);
 
-    console.log(labelStyled, scopeStyled, allMessages);
+    console.log(`[${timestamp}]`, labelStyled, scopeStyled, formattedMessages);
   }
 }
 
