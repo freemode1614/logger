@@ -51,6 +51,12 @@ export const logger: LoggerMethods = {
   setLevel,
 };
 
+/**
+ * Create a custom logger with specified scope prefix.
+ *
+ * @param scope {string} prefix
+ * @returns Logger {LoggerMethods}
+ */
 export function createScopedLogger(scope: string): LoggerMethods {
   return {
     trace: (...messages: unknown[]) => log("trace", scope, messages),
@@ -93,6 +99,7 @@ function log(level: DebugLevel, scope: string | undefined, messages: unknown[]) 
   const labelBackgroundColor = getColorForLevel(level);
   const labelTextColor = level === "warn" ? "#000000" : "#FFFFFF";
 
+  // Browser Capability
   if (isBrowser) {
     const labelStyles = getLabelStyles(labelBackgroundColor, labelTextColor);
     const scopeStyles = getLabelStyles("#77828D", "#FFFFFF");
